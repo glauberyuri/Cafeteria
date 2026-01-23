@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "corsheaders",
 
     "accounts",
-    "sectors"
+    "sectors",
+    "diet_types"
 ]
 
 REST_FRAMEWORK = {
