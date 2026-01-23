@@ -4,6 +4,8 @@ import DrMarioRibeiro from '../imgs/Logo_Hosp_Cabeca.png';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { login } from '@/services/auth';
+
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,10 +13,26 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // API-ready: Add authentication logic here
-    navigate('/dashboard');
+  
+    try {
+      const data = await login(username, password);
+  
+      // Salva tokens
+      localStorage.setItem('access_token', data.access);
+      localStorage.setItem('refresh_token', data.refresh);
+      localStorage.setItem('user', JSON.stringify(data.user));
+  
+      navigate('/dashboard');
+    } catch (error) {
+      if (error.response?.status === 401) {
+        alert('Usuário ou senha inválidos');
+      } else {
+        alert('Erro ao conectar com o servidor');
+      }
+    }
   };
 
   return (
