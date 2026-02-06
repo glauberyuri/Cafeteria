@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useCollaborators } from '@/contexts/CollaboratorContext';
 
 const typeConfig = {
   EMPLOYEE: {
@@ -34,9 +33,7 @@ const shiftLabels = {
   NIGHT: 'Noite',
 };
 
-export function CollaboratorTable() {
-  const { collaborators, editCollaborator } = useCollaborators();
-
+export function CollaboratorTable({ collaborators = [], onEdit }) {
   const getIdentifier = (c) => {
     if (c.registration) return c.registration;
     if (c.crm) return c.crm;
@@ -74,7 +71,10 @@ export function CollaboratorTable() {
             const isActive = c.active;
 
             return (
-              <TableRow key={`${c.type}-${c.id}`} className="hover:bg-muted/30">
+              <TableRow
+                key={`${c.type}-${c.id}`}
+                className="hover:bg-muted/30"
+              >
                 {/* ICON */}
                 <TableCell>
                   <div
@@ -147,7 +147,7 @@ export function CollaboratorTable() {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => editCollaborator(c)}
+                    onClick={() => onEdit?.(c)}
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>

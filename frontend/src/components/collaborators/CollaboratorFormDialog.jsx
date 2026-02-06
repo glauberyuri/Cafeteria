@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import api from '@/services/api';
 import {
   Dialog,
   DialogContent,
@@ -40,48 +41,56 @@ export function CollaboratorFormDialog({
   });
 
 
-  
   useEffect(() => {
-    if (collaborator) {
-      setType(collaborator.type);
-      setForm({
-        ...collaborator,
-        department: collaborator.department?.id ?? collaborator.department,
-      });
-    } else {
+    if (!collaborator) {
       setType('');
       setForm({
         full_name: '',
         email: '',
         active: true,
       });
+      return;
     }
+  
+    setType(collaborator.type);
+    setForm({
+      ...collaborator,
+      department: collaborator.department?.id ?? collaborator.department,
+    });
   }, [collaborator]);
 
-
   useEffect(() => {
-    if (collaborator?.type === 'EMPLOYEE') {
-      fetch(`/api/employee-meal-preference/${collaborator.registration}/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          setMealPreference({
-            automation_type: data?.automation_type ?? 'NONE',
-            default_meal_type: data?.default_meal_type ?? '',
-            start_date: data?.start_date ?? '',
-          });
-        });
-    } else {
+    async function loadMealPreference() {
       setMealPreference({
         automation_type: 'NONE',
         default_meal_type: '',
         start_date: '',
       });
+  
+      if (
+        type !== 'EMPLOYEE' ||
+        !form.registration
+      ) {
+        return;
+      }
+  
+      try {
+        const res = await api.get(
+          `/employee-meal-preference/${form.registration}/`
+        );
+  
+        setMealPreference({
+          automation_type: res.data?.automation_type ?? 'NONE',
+          default_meal_type: res.data?.default_meal_type ?? '',
+          start_date: res.data?.start_date ?? '',
+        });
+      } catch {
+        // não existe automação ainda
+      }
     }
-  }, [collaborator]);
+  
+    loadMealPreference();
+  }, [type, form.registration]);
   
   
 
@@ -93,6 +102,14 @@ export function CollaboratorFormDialog({
      const handleSubmit = () => {
       if (!type || !form.full_name) return;
     
+      const normalizedMealPreference =
+        mealPreference.automation_type === 'ALTERNATE'
+          ? mealPreference
+          : {
+              ...mealPreference,
+              start_date: null,
+      };
+
       const payload = {
         id: form.id,
         type,
@@ -111,10 +128,23 @@ export function CollaboratorFormDialog({
         // ACADEMIC
         institution: form.institution || null,
         course: form.course || null,
-      };
     
+        //AUTOMATION
+       meal_preference: type === 'EMPLOYEE'? normalizedMealPreference : null,
+      };
       onSave(payload);
       onOpenChange(false);
+      setType('');
+      setForm({
+        full_name: '',
+        email: '',
+        active: true,
+      });
+      setMealPreference({
+        automation_type: 'NONE',
+        default_meal_type: '',
+        start_date: '',
+      });
     };
 
 
@@ -222,9 +252,6 @@ export function CollaboratorFormDialog({
                 </Select>
               </div>
 
-              {/* =======================
-                  AUTOMAÇÃO DE REFEIÇÃO
-                ======================= */}
               <div className="border rounded-xl p-4 space-y-4 bg-muted/30">
                 <h4 className="font-semibold text-sm">
                   Automação de Refeição

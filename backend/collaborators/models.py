@@ -37,7 +37,9 @@ class Doctor(CollaboratorBase):
         unique=True
     )
     specialty = models.CharField(
-        max_length=100
+        max_length=100,
+        null=True,
+        blank=True
     )
 
     def __str__(self):

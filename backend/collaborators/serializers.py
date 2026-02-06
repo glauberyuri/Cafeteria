@@ -55,3 +55,18 @@ class EmployeeMealPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmployeeMealPreference
         fields = "__all__"
+
+    def validate(self, data):
+        automation_type = data.get("automation_type")
+        start_date = data.get("start_date")
+
+        if automation_type == "ALTERNATE" and not start_date:
+            raise serializers.ValidationError({
+                "start_date": "Obrigatório para plantonista (dia sim / dia não)."
+            })
+
+        if automation_type == "WEEKDAYS":
+            # garante que não bloqueia
+            data["start_date"] = None
+
+        return data

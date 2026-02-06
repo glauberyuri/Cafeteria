@@ -175,9 +175,11 @@ class EmployeeMealPreferenceView(APIView):
         return Response(EmployeeMealPreferenceSerializer(pref).data)
 
     def post(self, request):
-        serializer = EmployeeMealPreferenceSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        obj, _ = EmployeeMealPreference.objects.update_or_create(
+            employee_registration=request.data['employee_registration'],
+            defaults=request.data
+        )
+        serializer = EmployeeMealPreferenceSerializer(obj)
         return Response(serializer.data)
 
     def put(self, request, registration):

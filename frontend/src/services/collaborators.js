@@ -68,3 +68,10 @@ export async function getCollaborators() {
     ...academics.map(a => ({ ...a, type: 'ACADEMIC' })),
   ];
 }
+
+export async function saveMealPreference(registration, data) {
+  return api.post('employee-meal-preference/', {
+    employee_registration: registration,
+    ...data,
+  });
+}

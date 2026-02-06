@@ -9,6 +9,7 @@ import {
   updateEmployee,
   updateDoctor,
   updateAcademic,
+  saveMealPreference,
 } from '@/services/collaborators';
 import { toast } from 'sonner';
 
@@ -46,37 +47,45 @@ export function CollaboratorProvider({ children }) {
       setLoading(false);
     }
   }
-
   async function saveCollaborator(data) {
     try {
       let saved;
-
+  
       if (data.type === 'EMPLOYEE') {
         saved = data.id
           ? await updateEmployee(data.id, data)
           : await createEmployee(data);
+  
+        // 🔥 SALVA AUTOMACAO
+        if (data.meal_preference) {
+          await saveMealPreference(
+            saved.registration,
+            data.meal_preference
+          );
+        }
       }
-
+  
       if (data.type === 'DOCTOR') {
         saved = data.id
           ? await updateDoctor(data.id, data)
           : await createDoctor(data);
       }
-
+  
       if (data.type === 'ACADEMIC') {
         saved = data.id
           ? await updateAcademic(data.id, data)
           : await createAcademic(data);
       }
-
+  
       await loadCollaborators();
       toast.success('Colaborador salvo com sucesso');
       return saved;
-    } catch {
+    } catch (err) {
       toast.error('Erro ao salvar colaborador');
-      throw new Error();
+      throw err;
     }
   }
+  
 
   const totalItems = allCollaborators.length;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);

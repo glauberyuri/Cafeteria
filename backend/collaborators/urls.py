@@ -6,6 +6,7 @@ from .views import (
     DoctorDetailView,
     AcademicListCreateView,
     AcademicDetailView,
+    EmployeeMealPreferenceView,
 )
 
 urlpatterns = [
@@ -20,4 +21,13 @@ urlpatterns = [
     # Academics
     path("academics/", AcademicListCreateView.as_view()),
     path("academics/<int:pk>/", AcademicDetailView.as_view()),
+
+    path(
+        "employee-meal-preference/<str:registration>/",
+        EmployeeMealPreferenceView.as_view()
+    ),
+    path(
+        "employee-meal-preference/",
+        EmployeeMealPreferenceView.as_view()
+    ),
 ]
