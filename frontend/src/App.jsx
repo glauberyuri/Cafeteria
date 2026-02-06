@@ -7,6 +7,8 @@ import PrivateRoute from "@/routes/PrivateRoute"
 import Dashboard from "./pages/Dashboard";
 import SectorsPage from "./pages/Sectors";
 import DietPage from "./pages/DietPage";
+import Collaborators from "./pages/Collaborators";
+import { CollaboratorProvider } from "./contexts/CollaboratorContext";
 
 function App() {
 
@@ -38,7 +40,17 @@ function App() {
                 <DietPage />
               </PrivateRoute>
             }
-          />  
+          /> 
+          <Route
+            path="/Collaborators"
+            element={
+              <PrivateRoute>
+                <CollaboratorProvider>
+                  <Collaborators />
+                </CollaboratorProvider>
+              </PrivateRoute>
+            }
+          />   
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
