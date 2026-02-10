@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Academic, Doctor, Employee, EmployeeMealPreference
+from .models import Academic, Doctor, Employee, EmployeeMealPreference, AcademicAuthorization
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
@@ -70,3 +70,23 @@ class EmployeeMealPreferenceSerializer(serializers.ModelSerializer):
             data["start_date"] = None
 
         return data
+
+
+class AcademicAuthorizationSerializer(serializers.ModelSerializer):
+    academic_name = serializers.CharField(
+        source="academic.full_name", read_only=True
+    )
+    sector_name = serializers.CharField(
+        source="sector.name", read_only=True
+    )
+
+    class Meta:
+        model = AcademicAuthorization
+        fields = "__all__"
+        read_only_fields = (
+            "approved",
+            "approved_at",
+            "approved_by",
+            "start_date",
+            "end_date",
+        )

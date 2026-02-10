@@ -1,6 +1,7 @@
 
 from django.db import models
 from sectors.models import Sector
+from django.utils.timezone import now
 
 
 class CollaboratorBase(models.Model):
@@ -121,3 +122,36 @@ class EmployeeMealPreference(models.Model):
 
     def __str__(self):
         return self.default_meal_type
+
+
+class AcademicAuthorization(models.Model):
+    academic = models.ForeignKey(
+        Academic,
+        on_delete=models.CASCADE,
+        related_name="authorizations"
+    )
+
+    sector = models.ForeignKey(
+        Sector,
+        on_delete=models.PROTECT
+    )
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    approved = models.BooleanField(default=False)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    approved_by = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def approve(self, user):
+        self.approved = True
+        self.approved_at = now()
+        self.approved_by = user
+        self.save()
