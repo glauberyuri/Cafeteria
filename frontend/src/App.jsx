@@ -9,6 +9,7 @@ import SectorsPage from "./pages/Sectors";
 import DietPage from "./pages/DietPage";
 import Collaborators from "./pages/Collaborators";
 import { CollaboratorProvider } from "./contexts/CollaboratorContext";
+import StudentApproval from "./pages/StudentApproval";
 
 function App() {
 
@@ -48,6 +49,14 @@ function App() {
                 <CollaboratorProvider>
                   <Collaborators />
                 </CollaboratorProvider>
+              </PrivateRoute>
+            }
+          />   
+          <Route
+            path="/student-approval"
+            element={
+              <PrivateRoute>
+                  <StudentApproval />
               </PrivateRoute>
             }
           />   
