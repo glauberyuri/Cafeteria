@@ -1,32 +1,5 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  /* 🔥 SIDEBAR (ESTAVA FALTANDO) */
-  --color-sidebar-background: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-}
-
 /* Hospital Meal Management System - Design Tokens */
 
 @layer base {
@@ -34,46 +7,46 @@
     /* Primary Blue - Main brand color */
     --primary: 210 85% 29%;
     --primary-foreground: 0 0% 100%;
-
+    
     /* Dark Blue - Headers, sidebar */
     --primary-dark: 210 87% 24%;
-
+    
     /* Red Accent - Alerts, warnings */
     --destructive: 358 80% 50%;
     --destructive-foreground: 0 0% 100%;
-
+    
     /* Backgrounds */
     --background: 220 14% 96%;
     --foreground: 210 85% 15%;
-
+    
     /* Cards */
     --card: 0 0% 100%;
     --card-foreground: 210 85% 15%;
-
+    
     /* Muted/Gray text */
     --muted: 220 14% 92%;
     --muted-foreground: 0 0% 48%;
-
+    
     /* Secondary surfaces */
     --secondary: 220 14% 96%;
     --secondary-foreground: 210 85% 29%;
-
+    
     /* Accent */
     --accent: 210 85% 95%;
     --accent-foreground: 210 85% 29%;
-
+    
     /* Popover */
     --popover: 0 0% 100%;
     --popover-foreground: 210 85% 15%;
-
+    
     /* Borders */
     --border: 220 14% 88%;
     --input: 220 14% 88%;
     --ring: 210 85% 29%;
-
+    
     --radius: 0.75rem;
-
-    /* Sidebar */
+    
+    /* Sidebar - Dark blue theme */
     --sidebar-background: 210 87% 24%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
@@ -82,18 +55,16 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 210 85% 35%;
     --sidebar-ring: 0 0% 100%;
-
-    /* Status */
+    
+    /* Status colors */
     --status-active: 142 76% 36%;
     --status-inactive: 0 0% 48%;
     --status-pending: 38 92% 50%;
-
+    
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(210 85% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(210 85% 15% / 0.1),
-                 0 2px 4px -2px hsl(210 85% 15% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(210 85% 15% / 0.1),
-                 0 4px 6px -4px hsl(210 85% 15% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(210 85% 15% / 0.1), 0 2px 4px -2px hsl(210 85% 15% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(210 85% 15% / 0.1), 0 4px 6px -4px hsl(210 85% 15% / 0.1);
   }
 
   .dark {
@@ -106,23 +77,24 @@
     --muted: 210 85% 20%;
     --muted-foreground: 220 14% 70%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: Inter, system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
-
-  button,
-  a,
-  input,
-  select {
+  
+  /* Touch-friendly defaults */
+  button, a, input, select {
     @apply touch-manipulation;
   }
-
+  
+  /* Minimum touch targets */
   .touch-target {
     @apply min-h-[48px] min-w-[48px];
   }
@@ -132,7 +104,7 @@
   .card-shadow {
     box-shadow: var(--shadow-md);
   }
-
+  
   .card-shadow-lg {
     box-shadow: var(--shadow-lg);
   }

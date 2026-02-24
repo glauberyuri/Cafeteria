@@ -10,6 +10,9 @@ import DietPage from "./pages/DietPage";
 import Collaborators from "./pages/Collaborators";
 import { CollaboratorProvider } from "./contexts/CollaboratorContext";
 import StudentApproval from "./pages/StudentApproval";
+import WeeklyMenu from "./pages/WeeklyMenu";
+import { KioskProvider } from "./contexts/KioskContext";
+import PublicKiosk from "./pages/PublicKiosk";
 
 function App() {
 
@@ -43,6 +46,14 @@ function App() {
             }
           /> 
           <Route
+            path="/weekly-menu"
+            element={
+              <PrivateRoute>
+                <WeeklyMenu />
+              </PrivateRoute>
+            }
+          /> 
+          <Route
             path="/Collaborators"
             element={
               <PrivateRoute>
@@ -58,6 +69,14 @@ function App() {
               <PrivateRoute>
                   <StudentApproval />
               </PrivateRoute>
+            }
+          />   
+                    <Route
+            path="/kiosk"
+            element={
+              <KioskProvider>
+                <PublicKiosk />
+              </KioskProvider>
             }
           />   
           <Route path="*" element={<NotFound />} />

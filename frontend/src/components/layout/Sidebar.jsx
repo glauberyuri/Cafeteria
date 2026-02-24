@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, UtensilsCrossed, LogOut, ClipboardPlus, GraduationCap, Leaf, BarChart3, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, UtensilsCrossed, LogOut, ClipboardPlus, GraduationCap, Leaf, BarChart3, Building2, ChefHat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { icon: ClipboardPlus, label: 'Solicitar Refeição', path: '/request' },
   { icon: Users, label: 'Colaboradores', path: '/collaborators' },
   { icon: UtensilsCrossed, label: 'Refeições', path: '/meals' },
+  { icon: ChefHat, label: 'Cardápio Semanal', path: '/weekly-menu' },
   { icon: GraduationCap, label: 'Aprovação Alunos', path: '/student-approval' },
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
   { icon: Leaf, label: 'Tipos de Dieta', path: '/diet_type' },
