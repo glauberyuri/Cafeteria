@@ -45,7 +45,10 @@ INSTALLED_APPS = [
     "accounts",
     "sectors",
     "diet_types",
-    "collaborators"
+    "collaborators",
+    "meals",
+    "menus"
+
 ]
 
 REST_FRAMEWORK = {
