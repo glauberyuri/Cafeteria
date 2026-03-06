@@ -21,12 +21,23 @@ class CollaboratorBase(models.Model):
 
 
 class Academic(CollaboratorBase):
-    institution = models.CharField(max_length=150)
-    course = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True
+
+    CATEGORY_COMMON = "COMMON"
+    CATEGORY_RESIDENT = "RESIDENT"
+
+    CATEGORY_CHOICES = (
+        (CATEGORY_COMMON, "Aluno Comum"),
+        (CATEGORY_RESIDENT, "Residente"),
     )
+
+    category = models.CharField(
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        default=CATEGORY_COMMON
+    )
+
+    institution = models.CharField(max_length=150, null=True)
+    course = models.CharField(max_length=100, null=True, blank=True)
 
     def __str__(self):
         return self.institution

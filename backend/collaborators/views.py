@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.generics import DestroyAPIView
 from django.utils import timezone
+from rest_framework.permissions import AllowAny
 from datetime import timedelta
 from django.utils.timezone import now
 from rest_framework.response import Response
@@ -50,9 +51,9 @@ class EmployeeDetailView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.erros, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def path(self, request, pk):
+    def pacth(self, request, pk):
         employee = self.get_object(pk)
         serializer = EmployeeSerializer(
             employee, data=request.data, partial=True)
@@ -225,24 +226,36 @@ class AcademicAuthorizationApproveView(APIView):
 
     def post(self, request, pk):
 
-        try:
-            authorization = AcademicAuthorization.objects.get(pk=pk)
-        except AcademicAuthorization.DoesNotExist:
-            return Response(
-                {"detail": "Autorização não encontrada"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        authorization = get_object_or_404(AcademicAuthorization, pk=pk)
+
         if authorization.approved:
             return Response(
                 {"detail": "Autorização já aprovada"},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        academic = authorization.academic
         today = now().date()
+
+        if academic.category == "RESIDENT":
+            duration = timedelta(days=180)
+        else:
+            duration = timedelta(days=7)
+
         authorization.approved = True
         authorization.start_date = today
-        authorization.end_date = today + timedelta(days=7)
+        authorization.end_date = today + duration
         authorization.approved_at = now()
+        authorization.approved_by = request.user
         authorization.save()
+
+        return Response(
+            {
+                "detail": "Autorização aprovada",
+                "expires_at": authorization.end_date
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class AcademicAuthorizationRejectView(DestroyAPIView):
@@ -259,24 +272,119 @@ class AcademicAuthorizationRejectView(DestroyAPIView):
 
 
 class AcademicAuthorizationApproveAllView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
+
         today = timezone.now().date()
-        end_date = today + timedelta(days=7)
 
-        pending = AcademicAuthorization.objects.filter(end_date__isnull=True)
+        pending = AcademicAuthorization.objects.select_related("academic").filter(
+            approved=False
+        )
 
-        count = pending.count()
+        approved_count = 0
 
         for auth in pending:
-            auth.end_date = end_date
+
+            academic = auth.academic
+
+            already_valid = AcademicAuthorization.objects.filter(
+                academic=academic,
+                approved=True,
+                end_date__gte=today
+            ).exists()
+
+            if already_valid:
+                continue
+
+            if academic.category == "RESIDENT":
+                duration = timedelta(days=180)
+            else:
+                duration = timedelta(days=7)
+
+            auth.approved = True
+            auth.start_date = today
+            auth.end_date = today + duration
+            auth.approved_at = timezone.now()
+            auth.approved_by = request.user
             auth.save()
+
+            approved_count += 1
 
         return Response(
             {
-                "detail": f"{count} solicitações aprovadas",
-                "approved": count,
+                "detail": f"{approved_count} solicitações aprovadas",
+                "approved": approved_count,
             },
             status=status.HTTP_200_OK
+        )
+
+
+class CollaboratorSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        identifier = request.query_params.get("identifier")
+        collaborator_type = request.query_params.get("type")
+
+        if not identifier or not collaborator_type:
+            return Response(
+                {"detail": "identifier e type são obrigatórios"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        identifier = identifier.strip()
+
+        if collaborator_type == "employee":
+
+            employee = Employee.objects.filter(
+                registration=identifier,
+                active=True
+            ).select_related("department").first()
+
+            if employee:
+                data = EmployeeSerializer(employee).data
+                return Response({
+                    "type": "employee",
+                    "full_name": data["full_name"],
+                    "identifier": data["registration"],
+                    "sector": data["department_name"]
+                })
+
+        elif collaborator_type == "doctor":
+
+            doctor = Doctor.objects.filter(
+                crm=identifier,
+                active=True
+            ).first()
+
+            if doctor:
+                data = DoctorSerializer(doctor).data
+                return Response({
+                    "type": "doctor",
+                    "full_name": data["full_name"],
+                    "identifier": data["crm"],
+                    "sector": "Médico"
+                })
+
+        elif collaborator_type == "student":
+
+            academic = Academic.objects.filter(
+                id=identifier,
+                active=True
+            ).first()
+
+            if academic:
+                data = AcademicSerializer(academic).data
+                return Response({
+                    "type": "student",
+                    "full_name": data["full_name"],
+                    "identifier": data["id"],
+                    "sector": data["course"]
+                })
+
+        return Response(
+            {"detail": "Colaborador não encontrado"},
+            status=status.HTTP_404_NOT_FOUND
         )

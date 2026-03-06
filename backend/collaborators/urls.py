@@ -10,7 +10,8 @@ from .views import (
     AcademicAuthorizationApproveView,
     AcademicAuthorizationView,
     AcademicAuthorizationRejectView,
-    AcademicAuthorizationApproveAllView
+    AcademicAuthorizationApproveAllView,
+    CollaboratorSearchView
 )
 
 urlpatterns = [
@@ -56,5 +57,6 @@ urlpatterns = [
         "employee-meal-preference/",
         EmployeeMealPreferenceView.as_view()
     ),
+    path("collaborators/search/", CollaboratorSearchView.as_view()),
 
 ]

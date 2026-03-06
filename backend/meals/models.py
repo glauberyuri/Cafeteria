@@ -2,26 +2,21 @@ from django.db import models
 from django.utils import timezone
 
 
-class MealSettings(models.Model):
+class MealRequestSettings(models.Model):
 
-    lunch_deadline = models.TimeField(default="10:00")
-    dinner_deadline = models.TimeField(default="17:00")
+    lunch_start = models.TimeField(default="06:00")
+    lunch_end = models.TimeField(default="09:00")
+
+    dinner_start = models.TimeField(default="09:30")
+    dinner_end = models.TimeField(default="12:00")
 
     employee_price = models.DecimalField(
-        max_digits=8, decimal_places=2, default=0)
-    doctor_price = models.DecimalField(
-        max_digits=8, decimal_places=2, default=0)
-    student_price = models.DecimalField(
         max_digits=8, decimal_places=2, default=0)
 
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return "Configuração Global de Refeições"
-
-    class Meta:
-        verbose_name = "Configuração de Refeição"
-        verbose_name_plural = "Configurações de Refeição"
 
 
 class MealRequest(models.Model):
@@ -57,6 +52,10 @@ class MealRequest(models.Model):
 
     class Meta:
         unique_together = ('identifier', 'meal_type', 'date')
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['identifier']),
+        ]
 
     def __str__(self):
         return f"{self.collaborator_name} - {self.meal_type} - {self.date}"
