@@ -12,6 +12,7 @@ const navItems = [
   { icon: BarChart3, label: 'Relatórios', path: '/reports' },
   { icon: Leaf, label: 'Tipos de Dieta', path: '/diet_type' },
   { icon: Building2, label: 'Setor', path: '/sectors' },
+  { icon: Users, label: 'Configurações', path: '/settings' },
 ];
 
 export function Sidebar() {

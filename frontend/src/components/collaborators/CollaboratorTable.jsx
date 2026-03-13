@@ -35,6 +35,7 @@ const shiftLabels = {
 
 export function CollaboratorTable({ collaborators = [], onEdit }) {
   const getIdentifier = (c) => {
+    if (c.identifier) return c.identifier;
     if (c.registration) return c.registration;
     if (c.crm) return c.crm;
     if (c.institution) return c.institution;
@@ -75,7 +76,6 @@ export function CollaboratorTable({ collaborators = [], onEdit }) {
                 key={`${c.type}-${c.id}`}
                 className="hover:bg-muted/30"
               >
-                {/* ICON */}
                 <TableCell>
                   <div
                     className={cn(
@@ -98,18 +98,12 @@ export function CollaboratorTable({ collaborators = [], onEdit }) {
                     </p>
                   </div>
                 </TableCell>
-
-                {/* IDENTIFIER */}
                 <TableCell className="hidden md:table-cell font-mono text-sm text-muted-foreground">
                   {getIdentifier(c)}
                 </TableCell>
-
-                {/* SECTOR */}
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   {c.department_name || '-'}
                 </TableCell>
-
-                {/* SHIFT */}
                 <TableCell className="hidden sm:table-cell">
                   {c.type === 'EMPLOYEE' && c.shift ? (
                     <span
@@ -126,8 +120,6 @@ export function CollaboratorTable({ collaborators = [], onEdit }) {
                     '-'
                   )}
                 </TableCell>
-
-                {/* STATUS */}
                 <TableCell>
                   <span
                     className={cn(
@@ -140,8 +132,6 @@ export function CollaboratorTable({ collaborators = [], onEdit }) {
                     {isActive ? 'Ativo' : 'Inativo'}
                   </span>
                 </TableCell>
-
-                {/* ACTION */}
                 <TableCell>
                   <Button
                     variant="ghost"

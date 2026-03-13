@@ -13,6 +13,7 @@ import StudentApproval from "./pages/StudentApproval";
 import WeeklyMenu from "./pages/WeeklyMenu";
 import { KioskProvider } from "./contexts/KioskContext";
 import PublicKiosk from "./pages/PublicKiosk";
+import Settings from "./pages/Settings";
 
 function App() {
 
@@ -70,8 +71,16 @@ function App() {
                   <StudentApproval />
               </PrivateRoute>
             }
-          />   
-                    <Route
+          /> 
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                  <Settings />
+              </PrivateRoute>
+            }
+          />    
+          <Route
             path="/kiosk"
             element={
               <KioskProvider>

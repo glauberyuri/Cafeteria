@@ -19,10 +19,10 @@ export function MealReceipt({ request, onNewRequest }) {
   return (
     <div className="max-w-md mx-auto">
       <div className="bg-card rounded-2xl shadow-card overflow-hidden">
-        {/* Header com status */}
+
         <div className={cn(
           "p-6 text-center",
-          isAwaitingApproval ? "bg-status-pending" : "bg-status-active"
+          isAwaitingApproval ? "bg-yellow-300" : "bg-green-600"
         )}>
           <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
             {isAwaitingApproval ? (
@@ -42,13 +42,11 @@ export function MealReceipt({ request, onNewRequest }) {
           </p>
         </div>
 
-        {/* Detalhes */}
         <div className="p-6 space-y-4">
-          {/* Código */}
           <div className="bg-accent rounded-xl p-4 text-center">
             <p className="text-xs text-muted-foreground mb-1">Código do Pedido</p>
             <p className="text-2xl font-mono font-bold text-foreground tracking-wider">
-              {request.id.toUpperCase()}
+              {request.id.toString().toUpperCase()}
             </p>
           </div>
 

@@ -39,12 +39,53 @@ export function KioskProvider({ children }) {
   const [weeklyMenu, setWeeklyMenu] = useState([]);
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [orders, setOrders] = useState([]);
+  const [sectors, setSectors] = useState([]);
   const [dietTypes, setDietTypes] = useState([]);
   const [collaborator, setCollaborator] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
   const loadingRef = useRef(false);
 
+
+  const registerAcademic = async ({
+    full_name,
+    institution,
+    category,
+    identifier,
+    sector
+  }) => {
+  
+    try {
+  
+      const academicRes = await api.post("/academics/", {
+        full_name,
+        institution,
+        category,
+        identifier,
+        sector
+      });
+  
+      const academicId = academicRes.data.id;
+  
+      const authorizationRes = await api.post("/academic-authorizations/", {
+        academic: academicId,
+        identifier,
+        sector
+      });
+  
+      return {
+        academic: academicRes.data,
+        authorization: authorizationRes.data
+      };
+  
+    } catch (err) {
+  
+      console.error("Erro ao registrar acadêmico", err);
+      throw err;
+  
+    }
+  
+  };
 
   const loadMenu = async () => {
     if (loadingRef.current) return;
@@ -77,6 +118,21 @@ export function KioskProvider({ children }) {
     }
   };
 
+  const loadSectors = async () => {
+    try {
+  
+      const res = await api.get('/sectors/', {
+        params: { active: true }
+      });
+  
+      setSectors(res.data || []);
+  
+    } catch (err) {
+  
+      console.error("Erro ao carregar setores", err);
+  
+    }
+  };
 
   const loadDietTypes = async () => {
     try {
@@ -110,10 +166,51 @@ export function KioskProvider({ children }) {
     }
   };
 
+  const findOrdersByIdentifier = async (identifier) => {
+
+    try {
+  
+      const res = await api.get('/meal-requests/list', {
+        params: { identifier }
+      });
+  
+      return res.data || [];
+  
+    } catch (err) {
+  
+      console.error("Erro ao buscar pedidos", err);
+      return [];
+  
+    }
+  
+  };
+
+  const searchCollaborator = async (identifier, type) => {
+    try {
+  
+      const res = await api.get('/collaborators/search/', {
+        params: {
+          identifier,
+          type
+        }
+      });
+  
+      return res.data;
+  
+    } catch (err) {
+  
+      if (err.response?.status === 404) {
+        return null;
+      }
+  
+      console.error("Erro ao buscar colaborador", err);
+      throw err;
+    }
+  };
 
   const todayOrders = useMemo(() => {
-    return orders;
-  }, [orders]);
+    return orders.filter(order => order.date === today);
+  }, [orders, today]);
 
   const clearCollaborator = () => setCollaborator(null);
 
@@ -121,6 +218,8 @@ export function KioskProvider({ children }) {
     loadMenu();
     loadOrders();
     loadDietTypes();
+    loadSectors();
+
 
     const interval = setInterval(() => {
       loadMenu();
@@ -138,15 +237,19 @@ export function KioskProvider({ children }) {
         reloadMenu: loadMenu,
 
         dietTypes,
+        sectors,
 
         orders,
         todayOrders,
         createMealRequest,
         cancelOrder,
+        findOrdersByIdentifier,
 
         collaborator,
         setCollaborator,
         clearCollaborator,
+        registerAcademic,
+        searchCollaborator,
       }}
     >
       {children}
