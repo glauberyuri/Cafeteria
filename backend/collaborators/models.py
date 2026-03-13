@@ -36,6 +36,12 @@ class Academic(CollaboratorBase):
         default=CATEGORY_COMMON
     )
 
+    identifier = models.CharField(
+        "Matrícula",
+        max_length=30,
+        unique=True
+    )
+
     institution = models.CharField(max_length=150, null=True)
     course = models.CharField(max_length=100, null=True, blank=True)
 
@@ -147,8 +153,15 @@ class AcademicAuthorization(models.Model):
         on_delete=models.PROTECT
     )
 
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    end_date = models.DateField(
+        null=True,
+        blank=True
+    )
 
     approved = models.BooleanField(default=False)
     approved_at = models.DateTimeField(null=True, blank=True)

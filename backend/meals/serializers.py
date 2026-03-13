@@ -10,6 +10,11 @@ from .models import MealRequest, MealRequestSettings
 
 class MealRequestSerializer(serializers.ModelSerializer):
 
+    sector_name = serializers.CharField(
+        source="sector.name",
+        read_only=True
+    )
+
     class Meta:
         model = MealRequest
         fields = "__all__"

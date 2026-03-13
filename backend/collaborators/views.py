@@ -126,11 +126,30 @@ class AcademicListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = AcademicSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        identifier = request.data.get("identifier")
+
+        if not identifier:
+            return Response(
+                {"identifier": "Matrícula é obrigatória"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        academic, created = Academic.objects.get_or_create(
+            identifier=identifier,
+            defaults={
+                "full_name": request.data.get("full_name"),
+                "institution": request.data.get("institution"),
+                "category": request.data.get("category"),
+            }
+        )
+
+        serializer = AcademicSerializer(academic)
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        )
 
 
 class AcademicDetailView(APIView):
@@ -202,23 +221,49 @@ class AcademicAuthorizationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+
         queryset = AcademicAuthorization.objects.select_related(
             "academic", "sector"
         ).order_by("-created_at")
 
         serializer = AcademicAuthorizationSerializer(queryset, many=True)
+
         return Response(serializer.data)
 
     def post(self, request):
 
         serializer = AcademicAuthorizationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        academic = serializer.validated_data["academic"]
+        today = now().date()
+
+        already_valid = AcademicAuthorization.objects.filter(
+            academic=academic,
+            approved=True,
+            end_date__gte=today
+        ).exists()
+
+        if already_valid:
+            return Response(
+                {"detail": "Este aluno já possui autorização ativa."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        pending = AcademicAuthorization.objects.filter(
+            academic=academic,
+            approved=False
+        ).exists()
+
+        if pending:
+            return Response(
+                {"detail": "Já existe uma solicitação pendente para este aluno."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         serializer.save()
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class AcademicAuthorizationApproveView(APIView):
@@ -371,7 +416,7 @@ class CollaboratorSearchView(APIView):
         elif collaborator_type == "student":
 
             academic = Academic.objects.filter(
-                id=identifier,
+                identifier=identifier,
                 active=True
             ).first()
 
@@ -380,8 +425,8 @@ class CollaboratorSearchView(APIView):
                 return Response({
                     "type": "student",
                     "full_name": data["full_name"],
-                    "identifier": data["id"],
-                    "sector": data["course"]
+                    "identifier": data["identifier"],
+                    "Faculdade": data["institution"]
                 })
 
         return Response(

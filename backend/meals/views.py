@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import MealRequest, MealRequestSettings
+from collaborators.models import AcademicAuthorization
 from .serializers import MealRequestSerializer, MealRequestSettingsSerializer
 
 
@@ -43,8 +44,13 @@ class MealRequestViewSet(viewsets.ModelViewSet):
             )
 
         now = timezone.localtime().time()
-        meal_type = request.data.get("meal_type")
+        today = timezone.localtime().date()
 
+        meal_type = request.data.get("meal_type")
+        collaborator_type = request.data.get("collaborator_type")
+        identifier = request.data.get("identifier")
+
+        # valida horário
         if meal_type == "LUNCH":
             if not (settings.lunch_start <= now <= settings.lunch_end):
                 return Response(
@@ -65,6 +71,24 @@ class MealRequestViewSet(viewsets.ModelViewSet):
                         f"e {settings.dinner_end.strftime('%H:%M')}."
                     },
                     status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # valida autorização de acadêmico
+        if collaborator_type == "student":
+
+            authorized = AcademicAuthorization.objects.filter(
+                academic__identifier=identifier,
+                approved=True,
+                start_date__lte=today,
+                end_date__gte=today
+            ).exists()
+
+            if not authorized:
+                return Response(
+                    {
+                        "detail": "Acadêmico não autorizado para refeição. Procure a nutrição."
+                    },
+                    status=status.HTTP_403_FORBIDDEN
                 )
 
         return super().create(request, *args, **kwargs)

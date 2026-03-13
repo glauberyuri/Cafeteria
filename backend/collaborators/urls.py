@@ -15,6 +15,7 @@ from .views import (
 )
 
 urlpatterns = [
+
     # Employees
     path("employees/", EmployeeListCreateView.as_view()),
     path("employees/<int:pk>/", EmployeeDetailView.as_view()),

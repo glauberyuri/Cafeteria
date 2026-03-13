@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from sectors.models import Sector
 
 
 class MealRequestSettings(models.Model):
@@ -36,7 +37,11 @@ class MealRequest(models.Model):
     collaborator_name = models.CharField(max_length=200)
 
     identifier = models.CharField(max_length=50)
-    sector = models.CharField(max_length=100)
+    sector = models.ForeignKey(
+        Sector,
+        on_delete=models.PROTECT,
+        related_name="meal_requests"
+    )
 
     meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
     diet_type = models.CharField(max_length=100)
