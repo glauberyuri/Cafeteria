@@ -14,6 +14,14 @@ class MealRequestSerializer(serializers.ModelSerializer):
         source="sector.name",
         read_only=True
     )
+    meal_type_display = serializers.CharField(
+        source="get_meal_type_display",
+        read_only=True
+    )
+    status_display = serializers.CharField(
+        source="get_status_display",
+        read_only=True
+    )
 
     class Meta:
         model = MealRequest

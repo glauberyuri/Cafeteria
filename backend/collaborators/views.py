@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import DestroyAPIView
 from django.utils import timezone
 from rest_framework.permissions import AllowAny
-from datetime import timedelta
+from datetime import timedelta, date
 from django.utils.timezone import now
 from rest_framework.response import Response
 from rest_framework import status
@@ -53,7 +53,7 @@ class EmployeeDetailView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def pacth(self, request, pk):
+    def patch(self, request, pk):
         employee = self.get_object(pk)
         serializer = EmployeeSerializer(
             employee, data=request.data, partial=True)
@@ -184,37 +184,6 @@ class AcademicDetailView(APIView):
         academic = self.get_object(pk)
         academic.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class EmployeeMealPreferenceView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, registration):
-        pref = EmployeeMealPreference.objects.filter(
-            employee_registration=registration
-        ).first()
-
-        if not pref:
-            return Response(None)
-
-        return Response(EmployeeMealPreferenceSerializer(pref).data)
-
-    def post(self, request):
-        obj, _ = EmployeeMealPreference.objects.update_or_create(
-            employee_registration=request.data['employee_registration'],
-            defaults=request.data
-        )
-        serializer = EmployeeMealPreferenceSerializer(obj)
-        return Response(serializer.data)
-
-    def put(self, request, registration):
-        pref, _ = EmployeeMealPreference.objects.get_or_create(
-            employee_registration=registration
-        )
-        serializer = EmployeeMealPreferenceSerializer(pref, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
 
 class AcademicAuthorizationView(APIView):
@@ -365,11 +334,103 @@ class AcademicAuthorizationApproveAllView(APIView):
         )
 
 
+class EmployeeMealPreferenceView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, registration):
+        pref = EmployeeMealPreference.objects.filter(
+            employee_registration=registration
+        ).first()
+
+        if not pref:
+            return Response({"exists": False})
+
+        return Response(EmployeeMealPreferenceSerializer(pref).data)
+
+    def post(self, request):
+
+        registration = request.data.get("employee_registration")
+        mode = request.data.get("mode")
+
+        if not registration or not mode:
+            return Response(
+                {"detail": "employee_registration e mode são obrigatórios"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        employee = Employee.objects.only("shift").filter(
+            registration=registration,
+            active=True
+        ).first()
+
+        if not employee:
+            return Response(
+                {"detail": "Funcionário não encontrado"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        automation_type = None
+        default_meal_type = None
+        start_date = None
+
+        if mode == "manual":
+
+            active = True
+
+        elif mode == "automatic":
+
+            automation_type = "WEEKDAYS"
+            active = True
+
+            if employee.shift == Employee.SHIFT_DAY:
+                default_meal_type = "LUNCH"
+            else:
+                default_meal_type = "DINNER"
+
+        elif mode == "alternate":
+
+            automation_type = "ALTERNATE"
+            start_date = date.today()
+            active = True
+
+            if employee.shift == Employee.SHIFT_DAY:
+                default_meal_type = "LUNCH"
+            else:
+                default_meal_type = "DINNER"
+
+        else:
+            return Response(
+                {"detail": "mode inválido"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        obj, _ = EmployeeMealPreference.objects.update_or_create(
+            employee_registration=registration,
+            defaults={
+                "automation_type": automation_type,
+                "default_meal_type": default_meal_type,
+                "start_date": start_date,
+                "active": active
+            }
+        )
+
+        serializer = EmployeeMealPreferenceSerializer(obj)
+        return Response(serializer.data)
+
+    def put(self, request, registration):
+        pref, _ = EmployeeMealPreference.objects.get_or_create(
+            employee_registration=registration
+        )
+        serializer = EmployeeMealPreferenceSerializer(pref, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
 class CollaboratorSearchView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-
         identifier = request.query_params.get("identifier")
         collaborator_type = request.query_params.get("type")
 
@@ -382,7 +443,6 @@ class CollaboratorSearchView(APIView):
         identifier = identifier.strip()
 
         if collaborator_type == "employee":
-
             employee = Employee.objects.filter(
                 registration=identifier,
                 active=True
@@ -390,15 +450,21 @@ class CollaboratorSearchView(APIView):
 
             if employee:
                 data = EmployeeSerializer(employee).data
+
+                has_preference = EmployeeMealPreference.objects.filter(
+                    employee_registration=employee.registration,
+                    active=True
+                ).exists()
+
                 return Response({
                     "type": "employee",
                     "full_name": data["full_name"],
                     "identifier": data["registration"],
-                    "sector": data["department_name"]
+                    "sector": data["department_name"],
+                    "has_preference": has_preference
                 })
 
         elif collaborator_type == "doctor":
-
             doctor = Doctor.objects.filter(
                 crm=identifier,
                 active=True
@@ -414,7 +480,6 @@ class CollaboratorSearchView(APIView):
                 })
 
         elif collaborator_type == "student":
-
             academic = Academic.objects.filter(
                 identifier=identifier,
                 active=True
@@ -426,8 +491,14 @@ class CollaboratorSearchView(APIView):
                     "type": "student",
                     "full_name": data["full_name"],
                     "identifier": data["identifier"],
-                    "Faculdade": data["institution"]
+                    "faculty": data["institution"]
                 })
+
+        else:
+            return Response(
+                {"detail": "type inválido. Use: employee, doctor ou student"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         return Response(
             {"detail": "Colaborador não encontrado"},

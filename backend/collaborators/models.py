@@ -134,7 +134,7 @@ class EmployeeMealPreference(models.Model):
         help_text="Obrigatório para plantonista"
     )
 
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
