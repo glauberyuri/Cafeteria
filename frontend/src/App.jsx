@@ -12,8 +12,12 @@ import { CollaboratorProvider } from "./contexts/CollaboratorContext";
 import StudentApproval from "./pages/StudentApproval";
 import WeeklyMenu from "./pages/WeeklyMenu";
 import { KioskProvider } from "./contexts/KioskContext";
+import { ReportProvider } from "./contexts/MealReportContext";
 import PublicKiosk from "./pages/PublicKiosk";
 import Settings from "./pages/Settings";
+import { MealsProvider } from "./contexts/MealsContext";
+import Meals from "./pages/Meals"
+import Reports from "./pages/Reports";
 
 function App() {
 
@@ -87,7 +91,25 @@ function App() {
                 <PublicKiosk />
               </KioskProvider>
             }
-          />   
+          />  
+          <Route
+            path="/meals"
+            element={
+              <MealsProvider>
+                <Meals />
+              </MealsProvider>
+            }
+          />  
+          <Route
+            path="/reports"
+            element={
+                <PrivateRoute>
+                  <ReportProvider>
+                    <Reports />
+                  </ReportProvider>
+                </PrivateRoute>
+            }
+          />  
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

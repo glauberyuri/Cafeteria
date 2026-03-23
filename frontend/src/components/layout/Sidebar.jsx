@@ -3,8 +3,6 @@ import { LayoutDashboard, Users, UtensilsCrossed, LogOut, ClipboardPlus, Graduat
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-  { icon: ClipboardPlus, label: 'Solicitar Refeição', path: '/request' },
   { icon: Users, label: 'Colaboradores', path: '/collaborators' },
   { icon: UtensilsCrossed, label: 'Refeições', path: '/meals' },
   { icon: ChefHat, label: 'Cardápio Semanal', path: '/weekly-menu' },

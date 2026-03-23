@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SchedulePreferenceSelector } from '@/components/request/SchedulePreferenceSelector';
 import {
   UtensilsCrossed,
   ClipboardList,
@@ -17,7 +18,8 @@ import {
   ArrowLeft,
   Search,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Check
 } from 'lucide-react';
 
 import { toast } from 'sonner';
@@ -37,8 +39,9 @@ const collaboratorTypes = [
 export default function PublicKiosk() {
 
 
-
-  const { findOrdersByIdentifier, registerAcademic, sectors, searchCollaborator } = useKiosk();
+  const [schedulePreference, setSchedulePreference] = useState('manual');
+  const [hasPreference, setHasPreference] = useState(true);
+  const { findOrdersByIdentifier, registerAcademic, sectors, searchCollaborator, saveEmployeePreference } = useKiosk();
 
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [studentName, setStudentName] = useState('');
@@ -208,7 +211,15 @@ export default function PublicKiosk() {
   
         setCollaboratorName(result.full_name);
         setSector(result.sector || '');
-        setStep('details');
+  
+        // 🔥 REGRA PRINCIPAL
+        if (selectedType === 'employee' && !result.has_preference) {
+          setHasPreference(false);
+          setStep('preference');
+        } else {
+          setHasPreference(true);
+          setStep('details');
+        }
   
       } else {
   
@@ -228,6 +239,27 @@ export default function PublicKiosk() {
     } finally {
   
       setIsSearching(false);
+  
+    }
+  };
+
+  const handlePreferenceConfirm = async () => {
+
+    try {
+  
+      await saveEmployeePreference({
+        employee_registration: identifier,
+        mode: schedulePreference
+      });
+      
+      setHasPreference(true);
+      setStep('details');
+  
+      toast.success("Preferência salva com sucesso");
+  
+    } catch {
+  
+      toast.error("Erro ao salvar preferência");
   
     }
   
@@ -364,7 +396,10 @@ export default function PublicKiosk() {
     setSector('');
     setDietType('Comum');
     setNotFound(false);
-
+  
+    setSchedulePreference('manual');
+    setHasPreference(true);
+  
   };
 
   const getDayOfWeek = () => {
@@ -575,7 +610,63 @@ export default function PublicKiosk() {
         </div>
       );
     }
+ // Step 2: Schedule preference (only for new employees)
+ if (step === 'preference') {
+  return (
+    <div className="bg-card rounded-2xl p-6 shadow-card">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="icon" onClick={() => setStep('identifier')} className="touch-target">
+          <ArrowLeft className="w-6 h-6" />
+        </Button>
+        <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
+          <User className="w-6 h-6 text-primary-foreground" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Primeira vez?</h2>
+          <p className="text-sm text-muted-foreground">Configure sua preferência</p>
+        </div>
+      </div>
 
+      <div className="bg-muted/50 rounded-xl p-4 mb-6">
+        <p className="text-sm text-muted-foreground">
+          <strong className="text-foreground">Matrícula</strong> 
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Esta configuração é feita apenas uma vez
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <SchedulePreferenceSelector 
+          value={schedulePreference} 
+          onChange={setSchedulePreference} 
+        />
+
+        {schedulePreference !== 'manual' && (
+          <div className="bg-status-active/10 border border-status-active/20 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <Check className="w-5 h-5 text-status-active mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-status-active">Vantagem</p>
+                <p className="text-muted-foreground">
+                  Não precisa abrir o app todo dia. Refeição automática conforme sua preferência.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Button 
+          size="lg" 
+          className="w-full h-14 text-lg" 
+          onClick={handlePreferenceConfirm}
+        >
+          Continuar
+        </Button>
+      </div>
+    </div>
+  );
+}
     // Step 3: Confirm details, select sector and diet type
     if (step === 'details') {
       const typeInfo = collaboratorTypes.find(t => t.value === selectedType);
@@ -669,20 +760,23 @@ export default function PublicKiosk() {
 
       <main className="max-w-6xl mx-auto p-4 md:p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-14 text-base">
-            <TabsTrigger value="request" className="gap-2 h-12">
+          <TabsList className="grid w-full grid-cols-4 text-base h-auto bg-muted p-1 rounded-lg">
+            <TabsTrigger value="request" className="w-full gap-2">
               <UtensilsCrossed className="w-5 h-5" />
               <span className="hidden sm:inline">Solicitar</span>
             </TabsTrigger>
-            <TabsTrigger value="cancel" className="gap-2 h-12">
+
+            <TabsTrigger value="cancel" className="w-fullgap-2">
               <XCircle className="w-5 h-5" />
               <span className="hidden sm:inline">Cancelar</span>
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2 h-12">
+
+            <TabsTrigger value="orders" className="w-full  gap-2">
               <ClipboardList className="w-5 h-5" />
               <span className="hidden sm:inline">Pedidos</span>
             </TabsTrigger>
-            <TabsTrigger value="menu" className="gap-2 h-12">
+
+            <TabsTrigger value="menu" className="w-full  gap-2">
               <Calendar className="w-5 h-5" />
               <span className="hidden sm:inline">Cardápio</span>
             </TabsTrigger>

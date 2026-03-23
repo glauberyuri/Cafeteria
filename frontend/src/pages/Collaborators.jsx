@@ -54,13 +54,11 @@ export default function Collaborators() {
   const [editing, setEditing] = useState(null);
   const [sectors, setSectors] = useState([]);
 
-  /* LOAD COLLABORATORS */
 
   useEffect(() => {
     loadCollaborators();
   }, []);
 
-  /* LOAD SECTORS */
 
   useEffect(() => {
     async function loadSectors() {
@@ -75,7 +73,6 @@ export default function Collaborators() {
     loadSectors();
   }, []);
 
-  /* ACTIVE COUNT */
 
   const activeCount = useMemo(
     () => allCollaborators.filter((c) => c.active).length,

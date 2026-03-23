@@ -87,6 +87,8 @@ export function KioskProvider({ children }) {
   
   };
 
+  
+
   const loadMenu = async () => {
     if (loadingRef.current) return;
     loadingRef.current = true;
@@ -208,6 +210,10 @@ export function KioskProvider({ children }) {
     }
   };
 
+  const saveEmployeePreference = async (payload) => {
+    return api.post('/employee-meal-preference/', payload);
+  };
+
   const todayOrders = useMemo(() => {
     return orders.filter(order => order.date === today);
   }, [orders, today]);
@@ -242,6 +248,7 @@ export function KioskProvider({ children }) {
         orders,
         todayOrders,
         createMealRequest,
+        saveEmployeePreference,
         cancelOrder,
         findOrdersByIdentifier,
 

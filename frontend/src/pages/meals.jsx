@@ -1,47 +1,152 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Calendar, Truck } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MealCard } from '@/components/meals/MealCard';
 import { FilterButton } from '@/components/meals/FilterButton';
 import { DeliveryMode } from '@/components/meals/DeliveryMode';
-import { mockMeals as initialMeals, sectors, shifts } from '@/data/mockData';
+import { deliverMeal, deliverSector, deliverAllMeals } from "@/services/meals";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Meal } from '@/types';
+import { useMeals } from "@/contexts/MealsContext";
+import { getSectors } from "@/services/sectors";
+
 
 export default function Meals() {
-  const [meals, setMeals] = useState(initialMeals);
-  const [selectedSector, setSelectedSector] = useState('All Sectors');
-  const [selectedShift, setSelectedShift] = useState('All Shifts');
-  const [selectedDate, setSelectedDate] = useState('2026-01-14');
-  const [selectedStatus, setSelectedStatus] = useState('All');
-  const [isDeliveryMode, setIsDeliveryMode] = useState(false);
 
-  const statuses = ['All', 'Pending', 'Delivered', 'Cancelled'];
+    const { loadMeals, allMeals } = useMeals();
 
-  const handleDeliverMeal = (mealId) => {
-    setMeals(prev => prev.map(meal => 
-      meal.id === mealId ? { ...meal, status: 'Delivered' } : meal
-    ));
+    const [selectedSector, setSelectedSector] = useState('All Sectors');
+    const [selectedShift, setSelectedShift] = useState('All Shifts');
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+    const [selectedStatus, setSelectedStatus] = useState();
+    const [isDeliveryMode, setIsDeliveryMode] = useState(false);
+    const [sectors, setSectors] = useState([]);
+
+    const statuses = [
+        { value: 'All', label: 'Todos' },
+        { value: 'PENDING', label: 'Pendente' },
+        { value: 'DELIVERED', label: 'Entregue' },
+        { value: 'CANCELLED', label: 'Cancelado' }
+      ];
+
+    const shifts = [
+        {value:'LUNCH', label:'Almoço'},
+        {value:'DINNER', label: 'Jantar'}];
+
+    useEffect(() => {
+
+        loadMeals(selectedDate);
+      
+        const interval = setInterval(() => {
+          loadMeals(selectedDate);
+        }, 10000);
+      
+        return () => clearInterval(interval);
+      
+      }, [selectedDate]);
+
+  useEffect(() => {
+    async function loadSectors() {
+      try {
+        const data = await getSectors({ active: true });
+        setSectors(data);
+      } catch (err) {
+        console.error("Erro ao carregar setores", err);
+      }
+    }
+
+    loadSectors();
+  }, []);
+
+  const handleDeliverAll = async () => {
+
+    try {
+  
+      await deliverAllMeals();
+  
+      loadMeals(selectedDate);
+  
+      toast.success("Todas refeições entregues");
+  
+    } catch {
+  
+      toast.error("Erro ao entregar refeições");
+  
+    }
+  
   };
 
-  const handleDeliverSector = (sector) => {
-    setMeals(prev => prev.map(meal => 
-      meal.sector === sector && meal.status === 'Pending' 
-        ? { ...meal, status: 'Delivered' } 
-        : meal
-    ));
+  const handleDeliverMeal = async (mealId) => {
+
+    try {
+  
+      await deliverMeal(mealId);
+  
+      loadMeals(selectedDate);
+  
+    } catch {
+  
+      toast.error("Erro ao entregar refeição");
+  
+    }
+  
   };
 
-  const filteredMeals = meals.filter((meal) => {
-    const matchesSector = selectedSector === 'All Sectors' || meal.sector === selectedSector;
-    const matchesShift = selectedShift === 'All Shifts' || meal.shift === selectedShift;
-    const matchesDate = meal.date === selectedDate;
-    const matchesStatus = selectedStatus === 'All' || meal.status === selectedStatus;
-    return matchesSector && matchesShift && matchesDate && matchesStatus;
-  });
+  const handleDeliverSector = async (sector) => {
 
-  const pendingCount = meals.filter(m => m.status === 'Pending').length;
+    try {
+  
+      await deliverSector(sector);
+  
+      loadMeals(selectedDate);
+  
+      toast.success(`Setor ${sector} entregue`);
+  
+    } catch {
+  
+      toast.error("Erro ao entregar setor");
+  
+    }
+  
+  };
+
+
+  const meals = allMeals;
+
+  const filteredMeals = useMemo(() => {
+
+    return meals.filter((meal) => {
+  
+      const matchesSector =
+        selectedSector === 'ALL' ||
+        meal.sector_name === selectedSector;
+  
+      const matchesShift =
+        selectedShift === 'All Shifts' ||
+        meal.meal_type === selectedShift;
+  
+      const matchesDate =
+        meal.date?.split("T")[0] === selectedDate;
+  
+      const matchesStatus =
+        selectedStatus === 'All' ||
+        meal.status === selectedStatus;
+  
+      return (
+        matchesSector &&
+        matchesShift &&
+        matchesDate &&
+        matchesStatus
+      );
+  
+    });
+  
+  }, [meals, selectedSector, selectedShift, selectedDate, selectedStatus]);
+
+    const pendingCount = meals.filter(
+        m => m.status === 'PENDING'
+    ).length;
+
 
   if (isDeliveryMode) {
     return (
@@ -49,6 +154,7 @@ export default function Meals() {
         meals={meals}
         onDeliverMeal={handleDeliverMeal}
         onDeliverSector={handleDeliverSector}
+        onDeliverAll={handleDeliverAll}
         onClose={() => setIsDeliveryMode(false)}
       />
     );
@@ -60,7 +166,7 @@ export default function Meals() {
       <div className="mb-6">
         <Button
           onClick={() => setIsDeliveryMode(true)}
-          className="w-full sm:w-auto bg-status-active hover:bg-status-active/90 text-white touch-target text-lg py-6 px-8"
+          className="w-full sm:w-auto bg-green-600 hover:bg-green-950/90 text-white touch-target text-lg py-6 px-8"
           disabled={pendingCount === 0}
         >
           <Truck className="w-6 h-6 mr-3" />
@@ -77,17 +183,33 @@ export default function Meals() {
       <div className="bg-card rounded-xl p-6 shadow-md mb-6 space-y-4">
         {/* Row 1: Sector */}
         <div>
-          <label className="text-sm font-medium text-muted-foreground mb-2 block">Setor</label>
-          <div className="flex gap-2 flex-wrap">
-            {sectors.map((sector) => (
-              <FilterButton
-                key={sector}
-                label={sector}
-                active={selectedSector === sector}
-                onClick={() => setSelectedSector(sector)}
-              />
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+            Setor
+            </label>
+
+            <div className="flex gap-2 flex-wrap">
+
+            <FilterButton
+                key="ALL"
+                label="Todos"
+                active={selectedSector === 'ALL'}
+                onClick={() => setSelectedSector('ALL')}
+            />
+
+            {sectors
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((sector) => (
+
+                <FilterButton
+                    key={sector.id}
+                    label={sector.name}
+                    active={selectedSector === sector.name}
+                    onClick={() => setSelectedSector(sector.name)}
+                />
+
             ))}
-          </div>
+
+            </div>
         </div>
 
         {/* Row 2: Shift & Date */}
@@ -97,10 +219,10 @@ export default function Meals() {
             <div className="flex gap-2 flex-wrap">
               {shifts.map((shift) => (
                 <FilterButton
-                  key={shift}
-                  label={shift}
-                  active={selectedShift === shift}
-                  onClick={() => setSelectedShift(shift)}
+                  key={shift.value}
+                  label={shift.label}
+                  active={selectedShift === shift.value}
+                  onClick={() => setSelectedShift(shift.value)}
                 />
               ))}
             </div>
@@ -115,7 +237,7 @@ export default function Meals() {
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="pl-12 w-48"
-              />
+                />
             </div>
           </div>
         </div>
@@ -126,10 +248,10 @@ export default function Meals() {
           <div className="flex gap-2 flex-wrap">
             {statuses.map((status) => (
               <FilterButton
-                key={status}
-                label={status}
-                active={selectedStatus === status}
-                onClick={() => setSelectedStatus(status)}
+                key={status.value}
+                label={status.label}
+                active={selectedStatus === status.value}
+                onClick={() => setSelectedStatus(status.value)}
               />
             ))}
           </div>
